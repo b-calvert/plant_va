@@ -100,6 +100,22 @@ def main(data=DEFAULT_DATA, labels=DEFAULT_LABELS, esn=DEFAULT_ESN):
 
         print(f"Fold {fold} | Q acc={acc:.3f} bacc={bacc:.3f} F1={mf1:.3f}")
 
+        v_acc  = accuracy_score(v_te, v_pred)
+        v_bacc = balanced_accuracy_score(v_te, v_pred)
+        v_f1   = f1_score(v_te, v_pred, average="binary", zero_division=0)
+
+        a_acc  = accuracy_score(a_te, a_pred)
+        a_bacc = balanced_accuracy_score(a_te, a_pred)
+        a_f1   = f1_score(a_te, a_pred, average="binary", zero_division=0)
+
+        print(
+            f"Fold {fold} | "
+            f"V bacc={v_bacc:.3f} F1={v_f1:.3f} | "
+            f"A bacc={a_bacc:.3f} F1={a_f1:.3f} | "
+            f"Q bacc={bacc:.3f} F1={mf1:.3f}"
+)
+
+
     print("\nSummary:")
     print(
         f"Quadrant: acc={np.mean(accs):.3f}±{np.std(accs):.3f} | "
