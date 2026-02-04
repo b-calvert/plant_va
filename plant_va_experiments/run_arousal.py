@@ -9,10 +9,10 @@ from plant_va.labels import compute_env_quadrant
 from plant_va.features import build_internal_features
 from plant_va.datasets import make_window_dataset_binary
 from plant_va.plant_va_config.presets import (
-    DEFAULT_DATA, DEFAULT_LABELS, AROUSAL_WINDOW_FAST, DEFAULT_CV
+    DEFAULT_DATA, DEFAULT_LABELS, AROUSAL_WINDOWS, DEFAULT_CV
 )
 
-def main(data=DEFAULT_DATA, labels=DEFAULT_LABELS, window=AROUSAL_WINDOW_FAST, cv=DEFAULT_CV):
+def main(data=DEFAULT_DATA, labels=DEFAULT_LABELS, window=AROUSAL_WINDOWS, cv=DEFAULT_CV):
     df = load_sensor_df(hours=data.hours, rule=data.rule, analog_mode=data.analog_mode)
     d  = compute_env_quadrant(df, margin=labels.margin, smooth_minutes=labels.smooth_minutes)
 
