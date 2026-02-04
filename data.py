@@ -1,7 +1,7 @@
 import pandas as pd
 from readinfluxnew import PlantDataModel
 
-def load_sensor_df(hours: str = "-1000h", rule: str = "5s", analog_mode: str = "features") -> pd.DataFrame:
+def load_sensor_df(hours: str = "-1100h", rule: str = "5s", analog_mode: str = "features") -> pd.DataFrame:
     """
     Load sensor data via PlantDataModel and return a DataFrame indexed by time.
     Ensures DatetimeIndex, sorted ascending.
