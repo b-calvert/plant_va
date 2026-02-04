@@ -9,14 +9,14 @@ from plant_va.data import load_sensor_df
 from plant_va.labels import compute_env_quadrant
 from plant_va.features import build_internal_features
 from plant_va.datasets import make_window_dataset_binary
-from plant_va.plant_va_config.presets import DEFAULT_DATA, DEFAULT_LABELS, VALENCE_WINDOW, AROUSAL_WINDOW_FAST, DEFAULT_CV
+from plant_va.plant_va_config.presets import DEFAULT_DATA, DEFAULT_LABELS, VALENCE_WINDOW, AROUSAL_WINDOWS, DEFAULT_CV
 
 
 def main(
     data=DEFAULT_DATA,
     labels=DEFAULT_LABELS,
     windowV=VALENCE_WINDOW,
-    windowA=AROUSAL_WINDOW_FAST,
+    windowA=AROUSAL_WINDOWS,
     cv=DEFAULT_CV
 ):
     df = load_sensor_df(hours=data.hours, rule=data.rule, analog_mode=data.analog_mode)
