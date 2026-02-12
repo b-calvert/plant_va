@@ -8,5 +8,5 @@ AROUSAL_WINDOWS = WindowConfig(window_minutes=1, stride_minutes=1, lag_minutes=0
 
 
 DEFAULT_CV = CVConfig(n_splits=5)
-DEFAULT_ESN = ESNConfig(n_splits=3, n_reservoir=300, spectral_radius=0.9, leak=0.3,
+DEFAULT_ESN = ESNConfig(n_splits=5, n_reservoir=300, spectral_radius=1.2, leak=0.2,
                         input_scale=0.5, ridge_alpha=1.0, washout=50, seed=0)
