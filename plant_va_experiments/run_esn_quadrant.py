@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, c
 from plant_va.data import load_sensor_df
 from plant_va.labels import compute_env_quadrant
 from plant_va.datasets import make_sequence_dataset
-from plant_va.models_esn import esn_states, ridge_binary_readout_fit_predict, logreg_binary_readout_fit_predict
+from plant_va.models_esn import esn_states, ridge_binary_readout_fit_predict, logreg_binary_readout_fit_predict_tuned, logreg_multiclass_readout_fit_predict
 from plant_va.plant_va_config.presets import DEFAULT_DATA, DEFAULT_LABELS, DEFAULT_ESN
 
 
@@ -39,59 +39,41 @@ def main(data=DEFAULT_DATA, labels=DEFAULT_LABELS, esn=DEFAULT_ESN):
         a_tr, a_te = a[tr], a[te]
         q_te = q_true[te]
 
-        # scale inputs using train only
-        scV = StandardScaler()
-        scA = StandardScaler()
-        Uv_tr_s = scV.fit_transform(Uv_tr)
-        Uv_te_s = scV.transform(Uv_te)
-        Ua_tr_s = scA.fit_transform(Ua_tr)
-        Ua_te_s = scA.transform(Ua_te)
+        # scale inputs using train only (shared)
+        sc = StandardScaler()
+        U_tr_s = sc.fit_transform(Uv_tr)   # IMPORTANT: assumes Uv and Ua have same features
+        U_te_s = sc.transform(Uv_te)
 
-        # reservoir states
-        Xv_tr = esn_states(
-            Uv_tr_s,
+        # shared reservoir states (one ESN)
+        X_tr = esn_states(
+            U_tr_s,
             n_reservoir=esn.n_reservoir,
             spectral_radius=esn.spectral_radius,
             leak=esn.leak,
             input_scale=esn.input_scale,
             ridge_washout=esn.washout,
-            seed=esn.seed + 10 * fold,
+            seed=esn.seed + 10 * fold,   # one seed
         )
-        Xv_te = esn_states(
-            Uv_te_s,
+        X_te = esn_states(
+            U_te_s,
             n_reservoir=esn.n_reservoir,
             spectral_radius=esn.spectral_radius,
             leak=esn.leak,
             input_scale=esn.input_scale,
             ridge_washout=esn.washout,
-            seed=esn.seed + 10 * fold,
+            seed=esn.seed + 10 * fold,   # MUST match train to be comparable
         )
 
-        Xa_tr = esn_states(
-            Ua_tr_s,
-            n_reservoir=esn.n_reservoir,
-            spectral_radius=esn.spectral_radius,
-            leak=esn.leak,
-            input_scale=esn.input_scale,
-            ridge_washout=esn.washout,
-            seed=esn.seed + 10 * fold + 1,
-        )
-        Xa_te = esn_states(
-            Ua_te_s,
-            n_reservoir=esn.n_reservoir,
-            spectral_radius=esn.spectral_radius,
-            leak=esn.leak,
-            input_scale=esn.input_scale,
-            ridge_washout=esn.washout,
-            seed=esn.seed + 10 * fold + 1,
-        )
+        # readouts on same reservoir
+        #v_pred, pv, tV = ridge_binary_readout_fit_predict(X_tr, v_tr, X_te, alpha=1.0, washout=esn.washout)
+        #a_pred, pa, tA = ridge_binary_readout_fit_predict(X_tr, a_tr, X_te, alpha=1.0, washout=esn.washout)
+        v_pred, pv, tV = logreg_binary_readout_fit_predict_tuned(X_tr, v_tr, X_te, C=1.0, washout=esn.washout)
+        a_pred, pa, tA = logreg_binary_readout_fit_predict_tuned(X_tr, a_tr, X_te, C=1.0, washout=esn.washout)
 
-        #v_pred, pv = ridge_binary_readout_fit_predict(Xv_tr, v_tr, Xv_te, alpha=esn.ridge_alpha, washout=esn.washout)
-        #a_pred, pa = ridge_binary_readout_fit_predict(Xa_tr, a_tr, Xa_te, alpha=esn.ridge_alpha, washout=esn.washout)
+        q_pred, pq = logreg_multiclass_readout_fit_predict(X_tr, q_true[tr], X_te, C=1.0, washout=esn.washout)
 
-        v_pred, pv = logreg_binary_readout_fit_predict(Xv_tr, v_tr, Xv_te, C=1.0, washout=esn.washout)
-        a_pred, pa = logreg_binary_readout_fit_predict(Xa_tr, a_tr, Xa_te, C=1.0, washout=esn.washout)
 
+        print(f"Fold {fold} thresholds: tV={tV:.2f} tA={tA:.2f}")
         q_pred = (2 * v_pred + a_pred).astype(int)
 
         acc = accuracy_score(q_te, q_pred)

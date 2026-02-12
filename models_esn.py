@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import balanced_accuracy_score
 
 # =============================================================================
 # ESN CORE (sequence model: reservoir computing)
@@ -103,9 +104,48 @@ def ridge_binary_readout_fit_predict(
 
     return yhat, p
 
+def _best_threshold(y_true, p, grid=None):
+    if grid is None:
+        grid = np.linspace(0.05, 0.95, 181)
+    best_t, best = 0.5, -1.0
+    for t in grid:
+        yhat = (p >= t).astype(int)
+        b = balanced_accuracy_score(y_true, yhat)
+        if b > best:
+            best, best_t = b, t
+    return best_t, best
 
+def logreg_binary_readout_fit_predict_tuned(
+    Xtr, ytr, Xte, C=1.0, washout=50, class_weight="balanced"
+):
+    # washout on train
+    if washout > 0 and len(Xtr) > washout:
+        Xtr2, ytr2 = Xtr[washout:], ytr[washout:]
+    else:
+        Xtr2, ytr2 = Xtr, ytr
 
-def logreg_binary_readout_fit_predict(Xtr, ytr, Xte, C=1.0, washout=50, class_weight="balanced"):
+    # add bias
+    Xtrb = np.hstack([Xtr2, np.ones((len(Xtr2), 1))])
+    Xteb = np.hstack([Xte,  np.ones((len(Xte),  1))])
+
+    clf = LogisticRegression(
+        C=C,
+        class_weight=class_weight,
+        solver="liblinear",
+        max_iter=3000,
+    )
+    clf.fit(Xtrb, ytr2.astype(int))
+
+    # probabilities
+    p_tr = clf.predict_proba(Xtrb)[:, 1]
+    t_star, _ = _best_threshold(ytr2.astype(int), p_tr)
+
+    p_te = clf.predict_proba(Xteb)[:, 1]
+    yhat = (p_te >= t_star).astype(int)
+    return yhat, p_te, t_star
+
+# Multiclass logreg
+def logreg_multiclass_readout_fit_predict(Xtr, ytr, Xte, C=1.0, washout=50, class_weight="balanced"):
     if washout > 0 and len(Xtr) > washout:
         Xtr2, ytr2 = Xtr[washout:], ytr[washout:]
     else:
@@ -116,12 +156,13 @@ def logreg_binary_readout_fit_predict(Xtr, ytr, Xte, C=1.0, washout=50, class_we
 
     clf = LogisticRegression(
         C=C,
-        class_weight=class_weight,   # critical for quadrant-0 collapse
-        solver="liblinear",
-        max_iter=3000,
+        class_weight=class_weight,
+        solver="lbfgs",
+        multi_class="multinomial",
+        max_iter=5000,
     )
     clf.fit(Xtrb, ytr2.astype(int))
+    proba = clf.predict_proba(Xteb)
+    yhat = np.argmax(proba, axis=1)
+    return yhat, proba
 
-    p = clf.predict_proba(Xteb)[:, 1]
-    yhat = (p >= 0.5).astype(int)
-    return yhat, p
