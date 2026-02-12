@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, c
 from plant_va.data import load_sensor_df
 from plant_va.labels import compute_env_quadrant
 from plant_va.datasets import make_sequence_dataset
-from plant_va.models_esn import esn_states, ridge_binary_readout_fit_predict
+from plant_va.models_esn import esn_states, ridge_binary_readout_fit_predict, logreg_binary_readout_fit_predict
 from plant_va.plant_va_config.presets import DEFAULT_DATA, DEFAULT_LABELS, DEFAULT_ESN
 
 
@@ -86,8 +86,11 @@ def main(data=DEFAULT_DATA, labels=DEFAULT_LABELS, esn=DEFAULT_ESN):
             seed=esn.seed + 10 * fold + 1,
         )
 
-        v_pred, pv = ridge_binary_readout_fit_predict(Xv_tr, v_tr, Xv_te, alpha=esn.ridge_alpha, washout=esn.washout)
-        a_pred, pa = ridge_binary_readout_fit_predict(Xa_tr, a_tr, Xa_te, alpha=esn.ridge_alpha, washout=esn.washout)
+        #v_pred, pv = ridge_binary_readout_fit_predict(Xv_tr, v_tr, Xv_te, alpha=esn.ridge_alpha, washout=esn.washout)
+        #a_pred, pa = ridge_binary_readout_fit_predict(Xa_tr, a_tr, Xa_te, alpha=esn.ridge_alpha, washout=esn.washout)
+
+        v_pred, pv = logreg_binary_readout_fit_predict(Xv_tr, v_tr, Xv_te, C=1.0, washout=esn.washout)
+        a_pred, pa = logreg_binary_readout_fit_predict(Xa_tr, a_tr, Xa_te, C=1.0, washout=esn.washout)
 
         q_pred = (2 * v_pred + a_pred).astype(int)
 
