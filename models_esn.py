@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.linear_model import Ridge
+from sklearn.linear_model import LogisticRegression
 
 # =============================================================================
 # ESN CORE (sequence model: reservoir computing)
@@ -100,4 +101,27 @@ def ridge_binary_readout_fit_predict(
     p = 1.0 / (1.0 + np.exp(-s))       # logistic squash
     yhat = (p >= 0.5).astype(int)
 
+    return yhat, p
+
+
+
+def logreg_binary_readout_fit_predict(Xtr, ytr, Xte, C=1.0, washout=50, class_weight="balanced"):
+    if washout > 0 and len(Xtr) > washout:
+        Xtr2, ytr2 = Xtr[washout:], ytr[washout:]
+    else:
+        Xtr2, ytr2 = Xtr, ytr
+
+    Xtrb = np.hstack([Xtr2, np.ones((len(Xtr2), 1))])
+    Xteb = np.hstack([Xte,  np.ones((len(Xte),  1))])
+
+    clf = LogisticRegression(
+        C=C,
+        class_weight=class_weight,   # critical for quadrant-0 collapse
+        solver="liblinear",
+        max_iter=3000,
+    )
+    clf.fit(Xtrb, ytr2.astype(int))
+
+    p = clf.predict_proba(Xteb)[:, 1]
+    yhat = (p >= 0.5).astype(int)
     return yhat, p
