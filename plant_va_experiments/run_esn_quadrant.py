@@ -64,17 +64,29 @@ def main(data=DEFAULT_DATA, labels=DEFAULT_LABELS, esn=DEFAULT_ESN):
             seed=esn.seed + 10 * fold,   # MUST match train to be comparable
         )
 
-        # readouts on same reservoir
-        #v_pred, pv, tV = ridge_binary_readout_fit_predict(X_tr, v_tr, X_te, alpha=1.0, washout=esn.washout)
-        #a_pred, pa, tA = ridge_binary_readout_fit_predict(X_tr, a_tr, X_te, alpha=1.0, washout=esn.washout)
-        v_pred, pv, tV = logreg_binary_readout_fit_predict_tuned(X_tr, v_tr, X_te, C=1.0, washout=esn.washout)
-        a_pred, pa, tA = logreg_binary_readout_fit_predict_tuned(X_tr, a_tr, X_te, C=1.0, washout=esn.washout)
+        # readouts on same reservoir (RIDGE – main method)
+        v_pred, pv = ridge_binary_readout_fit_predict(
+            X_tr, v_tr, X_te, alpha=1.0, washout=esn.washout
+        )
+        a_pred, pa = ridge_binary_readout_fit_predict(
+            X_tr, a_tr, X_te, alpha=1.0, washout=esn.washout
+        )
 
-        q_pred, pq = logreg_multiclass_readout_fit_predict(X_tr, q_true[tr], X_te, C=1.0, washout=esn.washout)
+        # ---- Ablations (kept for reference, not active) ----
+        # v_pred, pv, tV = logreg_binary_readout_fit_predict_tuned(
+        #     X_tr, v_tr, X_te, C=1.0, washout=esn.washout
+        # )
+        # a_pred, pa, tA = logreg_binary_readout_fit_predict_tuned(
+        #     X_tr, a_tr, X_te, C=1.0, washout=esn.washout
+        # )
 
+        # q_pred_direct, pq = logreg_multiclass_readout_fit_predict(
+        #     X_tr, q_true[tr], X_te, C=1.0, washout=esn.washout
+        # )
 
-        print(f"Fold {fold} thresholds: tV={tV:.2f} tA={tA:.2f}")
+        # composed quadrant (from independent binaries)
         q_pred = (2 * v_pred + a_pred).astype(int)
+
 
         acc = accuracy_score(q_te, q_pred)
         bacc = balanced_accuracy_score(q_te, q_pred)
