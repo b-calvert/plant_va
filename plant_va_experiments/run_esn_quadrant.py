@@ -72,7 +72,7 @@ def main(data=DEFAULT_DATA, labels=DEFAULT_LABELS, esn=DEFAULT_ESN):
             X_tr, a_tr, X_te, alpha=1.0, washout=esn.washout
         )
 
-        # ---- Ablations (kept for reference, not active) ----
+        # ---- Alternatives (kept for reference, not active) ----
         # v_pred, pv, tV = logreg_binary_readout_fit_predict_tuned(
         #     X_tr, v_tr, X_te, C=1.0, washout=esn.washout
         # )
@@ -86,7 +86,6 @@ def main(data=DEFAULT_DATA, labels=DEFAULT_LABELS, esn=DEFAULT_ESN):
 
         # composed quadrant (from independent binaries)
         q_pred = (2 * v_pred + a_pred).astype(int)
-
 
         acc = accuracy_score(q_te, q_pred)
         bacc = balanced_accuracy_score(q_te, q_pred)
