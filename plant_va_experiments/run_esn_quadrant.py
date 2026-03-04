@@ -3,7 +3,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, confusion_matrix
 
-from plant_va.data import load_sensor_df
+from plant_va.data import load_sensor_df, load_sensor_df_chunked
 from plant_va.labels import compute_env_quadrant
 from plant_va.datasets import make_sequence_dataset
 from plant_va.models_esn import esn_states, ridge_binary_readout_fit_predict, logreg_binary_readout_fit_predict_tuned, logreg_multiclass_readout_fit_predict
@@ -11,7 +11,18 @@ from plant_va.plant_va_config.presets import DEFAULT_DATA, DEFAULT_LABELS, DEFAU
 
 
 def main(data=DEFAULT_DATA, labels=DEFAULT_LABELS, esn=DEFAULT_ESN):
-    df = load_sensor_df(hours=data.hours, rule=data.rule, analog_mode=data.analog_mode)
+    #df = load_sensor_df(hours=data.hours, rule=data.rule, analog_mode=data.analog_mode)
+    df = load_sensor_df_chunked(start="2025-12-20T15:00:00Z", stop="2026-01-09T15:00:00Z", rule=data.rule, analog_mode=data.analog_mode, chunk="24hr")
+
+    print("df shape:", df.shape)
+    print("df index min/max:", df.index.min(), df.index.max())
+    print("df columns:", list(df.columns))
+
+    cols = ["temperature", "humidity", "ir"]  # <- just checking why there are nulls
+    print("non-null counts:\n", df[cols].notna().sum())
+    print("head:\n", df[cols].head())
+    print("tail:\n", df[cols].tail())
+
     d = compute_env_quadrant(df, margin=labels.margin, smooth_minutes=labels.smooth_minutes)
 
     Uv, v, idx, feat_names = make_sequence_dataset(d, label_col="v_label")

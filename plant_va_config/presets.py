@@ -1,6 +1,6 @@
 from .base import DataConfig, LabelConfig, WindowConfig, CVConfig, ESNConfig
 
-DEFAULT_DATA = DataConfig(hours="-1000h", rule="5s", analog_mode="features")
+DEFAULT_DATA = DataConfig(hours="-1600h", rule="5s", analog_mode="features")
 DEFAULT_LABELS = LabelConfig(margin=0.1, smooth_minutes=5)
 
 VALENCE_WINDOW = WindowConfig(window_minutes=20, stride_minutes=15, lag_minutes=0, add_trend=True)

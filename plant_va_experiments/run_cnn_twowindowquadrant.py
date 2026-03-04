@@ -7,7 +7,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, f1_score, confusion_matrix
 
-from plant_va.data import load_sensor_df
+from plant_va.data import load_sensor_df, load_sensor_df_chunked
 from plant_va.labels import compute_env_quadrant
 from plant_va.datasets import make_cnn_sequence_windows
 from plant_va.models_cnn import CNN1DBinary
@@ -106,7 +106,18 @@ def main(
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # 1) Load + label data
-    df = load_sensor_df(hours=data.hours, rule=data.rule, analog_mode=data.analog_mode)
+    df = load_sensor_df(hours="-10hr", rule=data.rule, analog_mode=data.analog_mode)
+    #df = load_sensor_df_chunked(start="2025-12-20T15:00:00Z", stop="2026-01-09T15:00:00Z", rule=data.rule, analog_mode=data.analog_mode, chunk="24hr")
+
+    print("df shape:", df.shape)
+    print("df index min/max:", df.index.min(), df.index.max())
+    print("df columns:", list(df.columns))
+
+    cols = ["temperature", "humidity", "ir"]  # <- just checking why there are nulls
+    print("non-null counts:\n", df[cols].notna().sum())
+    print("head:\n", df[cols].head())
+    print("tail:\n", df[cols].tail())
+
     d = compute_env_quadrant(df, margin=labels.margin, smooth_minutes=labels.smooth_minutes)
 
     # 2) Build CNN windows for V and A (can be different window lengths)

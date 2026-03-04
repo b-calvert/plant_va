@@ -1,5 +1,7 @@
 import pandas as pd
 from readinfluxnew import PlantDataModel
+from tqdm import tqdm
+import numpy as np
 
 def load_sensor_df(hours: str = "-1100h", rule: str = "5s", analog_mode: str = "features") -> pd.DataFrame:
     """
@@ -24,28 +26,36 @@ def load_sensor_df_chunked(
     analog_mode: str = "features",
     chunk: str = "3h",
 ) -> pd.DataFrame:
-    """
-    Load data in chunks [t, t+chunk] to avoid Influx timeouts.
-    start/stop are ISO strings.
-    """
+
     t0 = pd.to_datetime(start, utc=True)
     t1 = pd.to_datetime(stop, utc=True)
     step = pd.Timedelta(chunk)
 
+    total_seconds = (t1 - t0).total_seconds()
+    chunk_seconds = step.total_seconds()
+    total_chunks = int(np.ceil(total_seconds / chunk_seconds))
+
     parts = []
     t = t0
-    while t < t1:
-        t_next = min(t + step, t1)
-        plant_model = PlantDataModel(
-            start=t.isoformat(),
-            stop=t_next.isoformat(),
-            rule=rule,
-            analog_mode=analog_mode,
-        )
-        df = plant_model.read_sensor_data()
-        if len(df):
-            parts.append(df)
-        t = t_next
+
+    with tqdm(total=total_chunks, desc="Loading Influx chunks") as pbar:
+        while t < t1:
+            t_next = min(t + step, t1)
+
+            plant_model = PlantDataModel(
+                start=t.isoformat(),
+                stop=t_next.isoformat(),
+                rule=rule,
+                analog_mode=analog_mode,
+            )
+
+            df = plant_model.read_sensor_data()
+
+            if len(df):
+                parts.append(df)
+
+            t = t_next
+            pbar.update(1)
 
     if not parts:
         return pd.DataFrame()
