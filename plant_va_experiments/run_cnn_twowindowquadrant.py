@@ -106,7 +106,7 @@ def main(
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # 1) Load + label data
-    df = load_sensor_df(hours="-10hr", rule=data.rule, analog_mode=data.analog_mode)
+    df = load_sensor_df(hours="-2000hr", rule=data.rule, analog_mode=data.analog_mode)
     #df = load_sensor_df_chunked(start="2025-12-20T15:00:00Z", stop="2026-01-09T15:00:00Z", rule=data.rule, analog_mode=data.analog_mode, chunk="24hr")
 
     print("df shape:", df.shape)

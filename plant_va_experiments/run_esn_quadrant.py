@@ -12,7 +12,7 @@ from plant_va.plant_va_config.presets import DEFAULT_DATA, DEFAULT_LABELS, DEFAU
 
 def main(data=DEFAULT_DATA, labels=DEFAULT_LABELS, esn=DEFAULT_ESN):
     #df = load_sensor_df(hours=data.hours, rule=data.rule, analog_mode=data.analog_mode)
-    df = load_sensor_df_chunked(start="2025-12-20T15:00:00Z", stop="2026-01-09T15:00:00Z", rule=data.rule, analog_mode=data.analog_mode, chunk="24hr")
+    df = load_sensor_df_chunked(start="2025-12-20T15:00:00Z", stop="2026-02-09T15:00:00Z", rule=data.rule, analog_mode=data.analog_mode, chunk="24hr")
 
     print("df shape:", df.shape)
     print("df index min/max:", df.index.min(), df.index.max())
